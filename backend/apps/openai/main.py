@@ -272,6 +272,8 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
     idx = 0
 
     body = await request.body()
+    print(f"Proxy called with {request.method} method for path: {path}")
+    print(f"Original body: {body}")
     # TODO: Remove below after gpt-4-vision fix from Open AI
     # Try to decode the body of the request from bytes to a UTF-8 string (Require add max_token to fix gpt-4-vision)
     try:
@@ -295,6 +297,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
             del body["num_ctx"]
 
         # Convert the modified body back to JSON
+        print(f"Modified body: {body}")
         body = json.dumps(body)
     except json.JSONDecodeError as e:
         log.error("Error loading request body into a dictionary:", e)
@@ -313,6 +316,8 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
 
     r = None
 
+    print(f"Request headers: {headers}")
+
     try:
         r = requests.request(
             method=request.method,
@@ -322,16 +327,22 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
             stream=True,
         )
 
+        print(f"Response received with status code: {r.status_code}")
+        print(f"Response headers: {r.headers}")
+        print("WHOLE REPONSE:",r)
         r.raise_for_status()
 
         # Check if response is SSE
         if "text/event-stream" in r.headers.get("Content-Type", ""):
+            print("returning some streaming)
             return StreamingResponse(
                 r.iter_content(chunk_size=8192),
                 status_code=r.status_code,
                 headers=dict(r.headers),
             )
         else:
+            print(f"Response content: {r.text}")
+            print(r)
             response_data = r.json()
             return response_data
     except Exception as e:
