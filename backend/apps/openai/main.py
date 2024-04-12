@@ -329,7 +329,8 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
 
         log.info(f"Response received with status code: {r.status_code}")
         log.info(f"Response headers: {r.headers}")
-        log.info("WHOLE REPONSE:",r)
+        log.info(f"R type: {type(r)}")
+        log.info(f"R object: {r}")
         r.raise_for_status()
 
         # Check if response is SSE
@@ -342,7 +343,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
             )
         else:
             log.info(f"Response content: {r.text}")
-            log.info(r)
+            log.info(f"R object: {r}")
             response_data = r.json()
             return response_data
     except Exception as e:
